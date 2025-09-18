@@ -1,6 +1,6 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Brain, Heart, Users, Shield, MessageCircle, Calendar, BookOpen, BarChart3, ArrowRight, CheckCircle } from 'lucide-react';
+import { Brain, Users, Shield, MessageCircle, Calendar, BookOpen, BarChart3, ArrowRight, CheckCircle } from 'lucide-react';
+import { Link } from "react-router-dom";
 
 const LandingPage = () => {
   const features = [
@@ -66,12 +66,20 @@ const LandingPage = () => {
                 <p className="text-sm text-gray-600">Digital Mental Health Platform</p>
               </div>
             </div>
-            <Link
-              to="/login"
-              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:shadow-lg transition-all duration-200 transform hover:scale-105"
-            >
-              Get Started
-            </Link>
+            <div className="flex space-x-3">
+              <Link
+                to="/login"
+                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+              >
+                Login
+              </Link>
+              <Link
+                to="/signup"
+                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+              >
+                Sign Up
+              </Link>
+            </div>
           </div>
         </div>
       </header>
@@ -92,15 +100,11 @@ const LandingPage = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
-                to="/login"
-                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 flex items-center justify-center"
+                to="/signup"
+                className="border-2 border-gray-300 text-gray-700 px-8 py-4 rounded-xl font-semibold text-lg hover:border-blue-500 hover:text-blue-600 transition-all duration-200"
               >
-                Start Your Journey
-                <ArrowRight className="ml-2 h-5 w-5" />
+                Get Started
               </Link>
-              <button className="border-2 border-gray-300 text-gray-700 px-8 py-4 rounded-xl font-semibold text-lg hover:border-blue-500 hover:text-blue-600 transition-all duration-200">
-                Watch Demo
-              </button>
             </div>
           </div>
         </div>
@@ -184,13 +188,7 @@ const LandingPage = () => {
           <p className="text-xl text-gray-300 mb-8">
             Join thousands of students, counselors, and administrators already using CareConnect.
           </p>
-          <Link
-            to="/login"
-            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 inline-flex items-center"
-          >
-            Get Started Today
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Link>
+          
         </div>
       </section>
 
