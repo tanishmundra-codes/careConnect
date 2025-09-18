@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '/Users/vivek/Desktop/project 3/Frontend/src/context/AuthContext.jsx';
+import { useAuth } from '../../context/AuthContext';
 import { 
   Brain, Calendar, Users, FileText, MessageSquare, 
   LogOut, Bell, TrendingUp, Clock, AlertTriangle,
