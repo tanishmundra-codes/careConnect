@@ -1,64 +1,52 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Brain, User, Lock, Eye, EyeOff } from 'lucide-react';
+import { Brain, Lock, Eye, EyeOff, User } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const LoginPage = () => {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    role: 'student'
-  });
+  const [formData, setFormData] = useState({ email: '', password: '', role: 'student' });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  // Demo credentials for testing
-  const demoCredentials = {
-    student: { email: 'student@college.edu', password: 'student123' },
-    counselor: { email: 'counselor@college.edu', password: 'counselor123' },
-    admin: { email: 'admin@college.edu', password: 'admin123' }
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
 
-    // Simulate API call
-    setTimeout(() => {
-      const demo = demoCredentials[formData.role];
-      if (formData.email === demo.email && formData.password === demo.password) {
-        const userData = {
-          id: Math.random().toString(36).substr(2, 9),
-          email: formData.email,
-          role: formData.role,
-          name: formData.role === 'student' ? 'John Doe' : 
-                formData.role === 'counselor' ? 'Dr. Sarah Smith' : 'Admin User'
-        };
-        login(userData);
-        navigate(`/${formData.role}`);
-      } else {
-        alert('Invalid credentials. Use demo credentials shown below.');
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.message || 'Login failed');
+        setLoading(false);
+        return;
       }
-      setLoading(false);
-    }, 1000);
-  };
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
+      // Save user data in context
+      login(data);
 
-  const fillDemoCredentials = (role) => {
-    const demo = demoCredentials[role];
-    setFormData({
-      email: demo.email,
-      password: demo.password,
-      role: role
-    });
+      // Redirect based on role
+      navigate(`/${data.role}`);
+    } catch (err) {
+      console.error(err);
+      setError('Network error. Please try again.');
+    }
+
+    setLoading(false);
   };
 
   return (
@@ -83,9 +71,7 @@ const LoginPage = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Role Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                I am a:
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">I am a:</label>
               <div className="grid grid-cols-3 gap-2">
                 {['student', 'counselor', 'admin'].map((role) => (
                   <button
@@ -104,7 +90,7 @@ const LoginPage = () => {
               </div>
             </div>
 
-            {/* Email Field */}
+            {/* Email */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 Email Address
@@ -124,7 +110,7 @@ const LoginPage = () => {
               </div>
             </div>
 
-            {/* Password Field */}
+            {/* Password */}
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 Password
@@ -151,7 +137,10 @@ const LoginPage = () => {
               </div>
             </div>
 
-            {/* Submit Button */}
+            {/* Error */}
+            {error && <p className="text-sm text-red-600">{error}</p>}
+
+            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
@@ -161,37 +150,11 @@ const LoginPage = () => {
             </button>
           </form>
 
-          {/* Demo Credentials */}
-          <div className="mt-8 p-4 bg-gray-50 rounded-lg">
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Demo Credentials:</h3>
-            <div className="space-y-2 text-xs">
-              {Object.entries(demoCredentials).map(([role, creds]) => (
-                <div key={role} className="flex justify-between items-center">
-                  <span className="font-medium capitalize">{role}:</span>
-                  <button
-                    type="button"
-                    onClick={() => fillDemoCredentials(role)}
-                    className="text-blue-600 hover:text-blue-800 underline"
-                  >
-                    {creds.email} / {creds.password}
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Footer Links */}
           <div className="mt-6 text-center">
-            <Link to="/" className="text-sm text-gray-600 hover:text-blue-600 transition-colors duration-200">
-              ← Back to Home
+            <Link to="/signup" className="text-sm text-blue-600 hover:text-blue-800 underline">
+              Don't have an account? Sign Up
             </Link>
           </div>
-        </div>
-
-        {/* Emergency Contact */}
-        <div className="text-center bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-sm text-red-800 font-medium">In Crisis? Need Immediate Help?</p>
-          <p className="text-lg font-bold text-red-900">Call 1-800-CRISIS (24/7)</p>
         </div>
       </div>
     </div>
