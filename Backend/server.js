@@ -4,6 +4,8 @@ import cors from 'cors';
 import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
 import assessmentRoutes from './routes/assessmentRoutes.js';
+import bookingRoutes from './routes/bookingRoutes.js';
+import counselorRoutes from './routes/counsellor.js'
 
 // --- Basic Setup ---
 dotenv.config();
@@ -30,6 +32,14 @@ app.use('/api/auth', authRoutes);
 
 // Mount the assessment routes under the /api/assessments prefix
 app.use('/api/assessments', assessmentRoutes);
+
+app.use('/api/counselors', counselorRoutes); // ✅ 2. USE the new routes
+
+
+// ✅ MOUNT NEW BOOKING ROUTES
+// This matches the `axios.post("/api/meetings", ...)` call from your frontend
+app.use('/api/meetings', bookingRoutes);
+
 
 
 // --- Server Initialization ---
