@@ -56,9 +56,26 @@ const BookingSystem = () => {
     'Other (please specify)'
   ];
 
-  const handleBooking = (e) => {
+  const handleBooking = async (e) => {
     e.preventDefault();
-    setShowConfirmation(true);
+  
+    try {
+      const response = await axios.post("/api/meetings", {
+        studentId: "12345",  // later replace with logged-in student ID
+        topic: reason,
+        date: `${selectedDate} ${selectedTime}`,
+        status: "pending",
+        counselorId: selectedCounselor,
+        sessionType,
+        urgency
+      });
+  
+      console.log("Booking saved:", response.data);
+      setShowConfirmation(true);
+    } catch (error) {
+      console.error("Error booking session:", error);
+      alert("Failed to book session. Please try again.");
+    }
   };
 
   const getUrgencyColor = (level) => {
