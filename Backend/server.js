@@ -1,33 +1,47 @@
-import express from "express";
-import dotenv from "dotenv";
-import connectDB from "./config/db.js";
-import cors from "cors";
-import authRoutes from "./routes/authRoutes.js";
-import assessementRoutes from "./models/assessment.js";
+import express from 'express';
+import dotenv from 'dotenv';
+import cors from 'cors';
+import connectDB from './config/db.js';
+import authRoutes from './routes/authRoutes.js';
+import assessmentRoutes from './routes/assessmentRoutes.js';
+import bookingRoutes from './routes/bookingRoutes.js';
+import counselorRoutes from './routes/counsellor.js'
+
+// --- Basic Setup ---
 dotenv.config();
 connectDB();
-
 const app = express();
 
-// Parse JSON requests
-app.use(express.json());
-
-// CORS for React frontend
+// --- Middleware ---
+// 1. Enable CORS for your frontend application
 app.use(
   cors({
-    origin: "http://localhost:3000", // React app
+    origin: 'http://localhost:5173',
     credentials: true,
   })
 );
+// 2. Enable JSON body parsing for API requests
+app.use(express.json());
 
-// Test route
-app.get("/", (req, res) => {
-  res.send("API is running...");
-});
+// --- API Routes ---
+// Health check route to confirm the API is running
+app.get('/', (req, res) => res.send('API is running...'));
 
-// Auth routes
-app.use("/api/auth", authRoutes);
-app.use("/api/assessments", assessementRoutes);
+// Mount the authentication routes under the /api/auth prefix
+app.use('/api/auth', authRoutes);
 
+// Mount the assessment routes under the /api/assessments prefix
+app.use('/api/assessments', assessmentRoutes);
+
+app.use('/api/counselors', counselorRoutes); // ✅ 2. USE the new routes
+
+
+// ✅ MOUNT NEW BOOKING ROUTES
+// This matches the `axios.post("/api/meetings", ...)` call from your frontend
+app.use('/api/meetings', bookingRoutes);
+
+
+
+// --- Server Initialization ---
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

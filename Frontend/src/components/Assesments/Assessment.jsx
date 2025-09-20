@@ -108,81 +108,63 @@ const Assessment = () => {
     }
   };
 
-  const calculateResults = () => {
+  const calculateResults = async () => {
     const totalScore = Object.values(answers).reduce((sum, value) => sum + value, 0);
-    const maxScore = selectedAssessment.questions.length * (selectedAssessment.options.length - 1);
-    
-    let severity, recommendation, riskLevel;
+    const maxScore =
+      selectedAssessment.questions.length *
+      (selectedAssessment.options[selectedAssessment.options.length - 1].value);
 
-    if (selectedAssessment.id === 'phq9') {
-      if (totalScore <= 4) {
-        severity = 'Minimal Depression';
-        recommendation = 'Your responses suggest minimal depression symptoms. Continue with healthy lifestyle practices.';
-        riskLevel = 'low';
-      } else if (totalScore <= 9) {
-        severity = 'Mild Depression';
-        recommendation = 'Your responses suggest mild depression symptoms. Consider speaking with a counselor for support.';
-        riskLevel = 'medium';
-      } else if (totalScore <= 14) {
-        severity = 'Moderate Depression';
-        recommendation = 'Your responses suggest moderate depression symptoms. We recommend scheduling a counseling session.';
-        riskLevel = 'high';
-      } else if (totalScore <= 19) {
-        severity = 'Moderately Severe Depression';
-        recommendation = 'Your responses suggest moderately severe depression. Please schedule a counseling session soon.';
-        riskLevel = 'high';
-      } else {
-        severity = 'Severe Depression';
-        recommendation = 'Your responses suggest severe depression symptoms. Please seek immediate professional help.';
-        riskLevel = 'crisis';
-      }
-    } else if (selectedAssessment.id === 'gad7') {
-      if (totalScore <= 4) {
-        severity = 'Minimal Anxiety';
-        recommendation = 'Your responses suggest minimal anxiety symptoms. Continue with stress management practices.';
-        riskLevel = 'low';
-      } else if (totalScore <= 9) {
-        severity = 'Mild Anxiety';
-        recommendation = 'Your responses suggest mild anxiety symptoms. Consider learning anxiety management techniques.';
-        riskLevel = 'medium';
-      } else if (totalScore <= 14) {
-        severity = 'Moderate Anxiety';
-        recommendation = 'Your responses suggest moderate anxiety symptoms. We recommend speaking with a counselor.';
-        riskLevel = 'high';
-      } else {
-        severity = 'Severe Anxiety';
-        recommendation = 'Your responses suggest severe anxiety symptoms. Please seek professional support.';
-        riskLevel = 'high';
-      }
-    } else {
-      const percentage = (totalScore / maxScore) * 100;
-      if (percentage <= 25) {
-        severity = 'Low Stress';
-        recommendation = 'Your stress levels appear manageable. Keep up your current coping strategies.';
-        riskLevel = 'low';
-      } else if (percentage <= 50) {
-        severity = 'Moderate Stress';
-        recommendation = 'You\'re experiencing moderate stress. Consider stress management techniques and resources.';
-        riskLevel = 'medium';
-      } else if (percentage <= 75) {
-        severity = 'High Stress';
-        recommendation = 'You\'re experiencing high stress levels. We recommend seeking support and counseling.';
-        riskLevel = 'high';
-      } else {
-        severity = 'Very High Stress';
-        recommendation = 'You\'re experiencing very high stress levels. Please consider immediate support and counseling.';
-        riskLevel = 'high';
-      }
+    let severity = "Mild";
+    let recommendation = "Monitor symptoms.";
+    let riskLevel = "low";
+
+    if (totalScore > maxScore * 0.7) {
+      severity = "Severe";
+      recommendation = "Immediate counselling recommended.";
+      riskLevel = "high";
+    } else if (totalScore > maxScore * 0.4) {
+      severity = "Moderate";
+      recommendation = "Counselling advised.";
+      riskLevel = "medium";
     }
 
-    setResults({
+    const resultData = {
+      type: selectedAssessment.type,
+      name: selectedAssessment.name,
+      description: selectedAssessment.description,
+      duration: selectedAssessment.duration,
+      questions: selectedAssessment.questions.map((q) => ({
+        text: q,
+        options: selectedAssessment.options,
+      })),
+      answers,
       score: totalScore,
       maxScore,
       severity,
       recommendation,
       riskLevel,
-      percentage: Math.round((totalScore / maxScore) * 100)
-    });
+      percentage: Math.round((totalScore / maxScore) * 100),
+    };
+
+    try {
+      const res = await fetch("http://localhost:5000/api/assessments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(resultData),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Server error: ${res.status}`);
+      }
+
+      const data = await res.json();
+      console.log("✅ Saved assessment:", data);
+    } catch (err) {
+      console.error("❌ Error saving assessment:", err);
+    }
+
+    setResults(resultData);
     setShowResults(true);
   };
 
@@ -382,7 +364,6 @@ const Assessment = () => {
         </header>
 
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Progress Bar */}
           <div className="mb-8">
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div 
@@ -438,13 +419,15 @@ const Assessment = () => {
               >
                 Previous
               </button>
-              <button
-                onClick={handleNext}
-                disabled={currentAnswer === undefined}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {currentQuestion === selectedAssessment.questions.length - 1 ? 'Complete Assessment' : 'Next'}
-              </button>
+             <button
+    onClick={handleNext}
+    // This line disables the button if no answer is selected for the current question
+    disabled={answers[currentQuestion] === undefined}
+                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+
+>
+    {currentQuestion === selectedAssessment.questions.length - 1 ? 'Complete Assessment' : 'Next'}
+</button>
             </div>
           </div>
         </div>
@@ -454,7 +437,6 @@ const Assessment = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-4">
@@ -472,7 +454,6 @@ const Assessment = () => {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Information Banner */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
           <div className="flex items-start space-x-3">
             <Info className="h-6 w-6 text-blue-600 mt-0.5" />
@@ -491,7 +472,6 @@ const Assessment = () => {
           </div>
         </div>
 
-        {/* Assessment Cards */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {assessments.map((assessment) => (
             <div key={assessment.id} className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
@@ -529,7 +509,6 @@ const Assessment = () => {
           ))}
         </div>
 
-        {/* Additional Information */}
         <div className="mt-12 bg-white rounded-xl shadow-sm p-8">
           <h3 className="text-xl font-semibold text-gray-900 mb-6">Why Take Mental Health Assessments?</h3>
           <div className="grid md:grid-cols-2 gap-8">
