@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  ArrowLeft, Users, MessageCircle, Plus, Heart, 
+import axios from 'axios';
+import {
+  ArrowLeft, Users, MessageCircle, Plus, Heart,
   Clock, Eye, MessageSquare, ThumbsUp, Shield,
   Search, Filter, User, Send, MoreVertical
 } from 'lucide-react';
@@ -12,6 +13,15 @@ const PeerSupport = () => {
   const [newPostContent, setNewPostContent] = useState('');
   const [newPostTitle, setNewPostTitle] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('general');
+  const [discussions, setDiscussions] = useState([]);
+  const [supportGroups, setSupportGroups] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // New state variables for reply functionality
+  const [showReplyModal, setShowReplyModal] = useState(false);
+  const [selectedDiscussion, setSelectedDiscussion] = useState(null);
+  const [newReplyContent, setNewReplyContent] = useState('');
 
   const categories = [
     { id: 'general', label: 'General Support', color: 'bg-blue-100 text-blue-800' },
@@ -22,112 +32,115 @@ const PeerSupport = () => {
     { id: 'lifestyle', label: 'Lifestyle & Wellness', color: 'bg-green-100 text-green-800' }
   ];
 
-  const discussions = [
-    {
-      id: 1,
-      title: 'Dealing with exam anxiety - what works for you?',
-      author: 'Anonymous Student',
-      category: 'anxiety',
-      content: 'I\'ve been struggling with severe anxiety before exams. My heart races, I can\'t sleep, and I feel like I\'m going to fail even when I\'ve studied. Has anyone found techniques that actually help?',
-      timestamp: '2 hours ago',
-      replies: 12,
-      likes: 8,
-      views: 45,
-      isAnonymous: true,
-      tags: ['exam anxiety', 'coping strategies', 'stress management']
-    },
-    {
-      id: 2,
-      title: 'Feeling isolated in college - anyone else?',
-      author: 'Anonymous Student',
-      category: 'general',
-      content: 'I\'m in my second year but still feel like I don\'t belong here. Everyone seems to have their friend groups already formed. It\'s affecting my motivation to attend classes.',
-      timestamp: '5 hours ago',
-      replies: 18,
-      likes: 15,
-      views: 67,
-      isAnonymous: true,
-      tags: ['loneliness', 'social connection', 'college life']
-    },
-    {
-      id: 3,
-      title: 'Healthy study habits that changed my life',
-      author: 'Anonymous Student',
-      category: 'academic',
-      content: 'After struggling for months, I finally found a study routine that works. Sharing what helped me in case it helps others dealing with academic stress.',
-      timestamp: '1 day ago',
-      replies: 24,
-      likes: 32,
-      views: 89,
-      isAnonymous: true,
-      tags: ['study tips', 'productivity', 'success story']
-    },
-    {
-      id: 4,
-      title: 'Managing depression while keeping up with coursework',
-      author: 'Anonymous Student',
-      category: 'depression',
-      content: 'Some days I can barely get out of bed, but I still need to attend classes and submit assignments. How do you balance mental health recovery with academic responsibilities?',
-      timestamp: '1 day ago',
-      replies: 16,
-      likes: 22,
-      views: 78,
-      isAnonymous: true,
-      tags: ['depression', 'academic balance', 'self care']
+  const fetchDiscussions = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get('http://localhost:5000/api/discussions');
+      setDiscussions(response.data);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching discussions:', err);
+      setError('Failed to load discussions. Please try again.');
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
-  const supportGroups = [
-    {
-      id: 1,
-      name: 'Anxiety Support Circle',
-      description: 'A safe space to share experiences and coping strategies for anxiety',
-      members: 45,
-      category: 'anxiety',
-      moderator: 'Trained Peer Volunteer',
-      meetingTime: 'Wednesdays 7:00 PM',
-      isActive: true
-    },
-    {
-      id: 2,
-      name: 'Academic Stress Management',
-      description: 'Tips and support for managing academic pressure and perfectionism',
-      members: 38,
-      category: 'academic',
-      moderator: 'Trained Peer Volunteer',
-      meetingTime: 'Fridays 6:00 PM',
-      isActive: true
-    },
-    {
-      id: 3,
-      name: 'Mindfulness & Wellness',
-      description: 'Exploring mindfulness practices and healthy lifestyle habits together',
-      members: 29,
-      category: 'lifestyle',
-      moderator: 'Trained Peer Volunteer',
-      meetingTime: 'Sundays 5:00 PM',
-      isActive: true
+  const fetchSupportGroups = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get('http://localhost:5000/api/groups');
+      setSupportGroups(response.data);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching support groups:', err);
+      setError('Failed to load support groups. Please try again.');
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  useEffect(() => {
+    if (selectedTab === 'discussions') {
+      fetchDiscussions();
+    } else {
+      fetchSupportGroups();
+    }
+  }, [selectedTab]);
 
   const getCategoryColor = (categoryId) => {
     const category = categories.find(c => c.id === categoryId);
     return category ? category.color : 'bg-gray-100 text-gray-800';
   };
 
-  const handleNewPost = () => {
+  const handleNewPost = async () => {
     if (newPostTitle.trim() && newPostContent.trim()) {
-      // In a real app, this would submit to the backend
-      setShowNewPost(false);
-      setNewPostTitle('');
-      setNewPostContent('');
-      // Show success message
+      try {
+        const newPost = {
+          title: newPostTitle,
+          content: newPostContent,
+          category: selectedCategory,
+        };
+        await axios.post('http://localhost:5000/api/discussions', newPost);
+        setShowNewPost(false);
+        setNewPostTitle('');
+        setNewPostContent('');
+        fetchDiscussions();
+      } catch (err) {
+        console.error('Error creating new post:', err);
+      }
     }
   };
 
+  const handleLike = async (id) => {
+    try {
+      await axios.put(`http://localhost:5000/api/discussions/${id}/like`);
+      fetchDiscussions();
+    } catch (err) {
+      console.error('Error liking discussion:', err);
+    }
+  };
+
+  const handleReplyClick = (discussion) => {
+    setSelectedDiscussion(discussion);
+    setShowReplyModal(true);
+  };
+
+  const handleReplySubmission = async () => {
+    if (newReplyContent.trim() && selectedDiscussion) {
+      try {
+        await axios.post(`http://localhost:5000/api/discussions/${selectedDiscussion._id}/replies`, {
+          content: newReplyContent,
+          author: 'Anonymous Student',
+        });
+        setShowReplyModal(false);
+        setNewReplyContent('');
+        setSelectedDiscussion(null);
+        fetchDiscussions(); // Re-fetch to see the new reply
+      } catch (err) {
+        console.error('Error submitting reply:', err);
+      }
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-gray-600">Loading...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-red-500">{error}</div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-4">
@@ -145,7 +158,6 @@ const PeerSupport = () => {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Community Guidelines Banner */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
           <div className="flex items-start space-x-3">
             <Shield className="h-5 w-5 text-blue-600 mt-0.5" />
@@ -158,7 +170,6 @@ const PeerSupport = () => {
           </div>
         </div>
 
-        {/* Tab Navigation */}
         <div className="bg-white rounded-xl shadow-sm mb-8">
           <div className="border-b border-gray-200">
             <nav className="flex space-x-8 px-6">
@@ -182,11 +193,9 @@ const PeerSupport = () => {
             </nav>
           </div>
 
-          {/* Tab Content */}
           <div className="p-6">
             {selectedTab === 'discussions' && (
               <div>
-                {/* Discussion Controls */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-4 sm:space-y-0">
                   <div className="flex items-center space-x-4">
                     <div className="relative">
@@ -215,13 +224,11 @@ const PeerSupport = () => {
                   </button>
                 </div>
 
-                {/* New Post Modal */}
                 {showNewPost && (
                   <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
                     <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                       <div className="p-6">
                         <h3 className="text-lg font-semibold text-gray-900 mb-4">Start a New Discussion</h3>
-                        
                         <div className="space-y-4">
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
@@ -237,7 +244,6 @@ const PeerSupport = () => {
                               ))}
                             </select>
                           </div>
-                          
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
                             <input
@@ -248,7 +254,6 @@ const PeerSupport = () => {
                               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             />
                           </div>
-                          
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Your Message</label>
                             <textarea
@@ -259,14 +264,12 @@ const PeerSupport = () => {
                               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             />
                           </div>
-                          
                           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                             <p className="text-sm text-yellow-800">
                               <strong>Note:</strong> Your post will be anonymous. All discussions are moderated by trained peer volunteers to ensure a safe environment.
                             </p>
                           </div>
                         </div>
-                        
                         <div className="flex justify-end space-x-3 mt-6">
                           <button
                             onClick={() => setShowNewPost(false)}
@@ -286,21 +289,65 @@ const PeerSupport = () => {
                   </div>
                 )}
 
-                {/* Discussions List */}
+                {showReplyModal && (
+                  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                      <div className="p-6">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Reply to Discussion: "{selectedDiscussion?.title}"</h3>
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Your Reply</label>
+                            <textarea
+                              value={newReplyContent}
+                              onChange={(e) => setNewReplyContent(e.target.value)}
+                              placeholder="Share your thoughts or support."
+                              rows="4"
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          </div>
+                          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                            <p className="text-sm text-yellow-800">
+                              <strong>Note:</strong> Your reply will be anonymous.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex justify-end space-x-3 mt-6">
+                          <button
+                            onClick={() => {
+                              setShowReplyModal(false);
+                              setNewReplyContent('');
+                              setSelectedDiscussion(null);
+                            }}
+                            className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={handleReplySubmission}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                          >
+                            Post Reply
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-4">
                   {discussions.map((discussion) => (
-                    <div key={discussion.id} className="bg-gray-50 rounded-lg p-6 hover:bg-gray-100 transition-colors">
+                    <div key={discussion._id} className="bg-gray-50 rounded-lg p-6 hover:bg-gray-100 transition-colors">
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">
                           <div className="flex items-center space-x-3 mb-2">
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(discussion.category)}`}>
                               {categories.find(c => c.id === discussion.category)?.label}
                             </span>
-                            <span className="text-sm text-gray-500">{discussion.timestamp}</span>
+                            <span className="text-sm text-gray-500">{new Date(discussion.createdAt).toLocaleDateString()}</span>
                           </div>
                           <h3 className="text-lg font-semibold text-gray-900 mb-2">{discussion.title}</h3>
                           <p className="text-gray-700 mb-3">{discussion.content}</p>
-                          
+
                           <div className="flex flex-wrap gap-2 mb-3">
                             {discussion.tags.map((tag, index) => (
                               <span key={index} className="text-xs bg-white text-gray-600 px-2 py-1 rounded border">
@@ -308,17 +355,32 @@ const PeerSupport = () => {
                               </span>
                             ))}
                           </div>
+
+                          {/* Display Replies */}
+                          {discussion.replies?.length > 0 && (
+                            <div className="mt-4 border-t border-gray-200 pt-4">
+                              <h4 className="font-semibold text-gray-800 mb-2">Replies:</h4>
+                              {discussion.replies.map((reply, index) => (
+                                <div key={index} className="bg-gray-100 p-3 rounded-lg text-sm text-gray-800 mb-2">
+                                  <p>{reply.content}</p>
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    - {reply.author} on {new Date(reply.createdAt).toLocaleDateString()}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                         <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
                           <MoreVertical className="h-4 w-4" />
                         </button>
                       </div>
-                      
+
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-6 text-sm text-gray-600">
                           <div className="flex items-center space-x-1">
                             <MessageSquare className="h-4 w-4" />
-                            <span>{discussion.replies} replies</span>
+                            <span>{discussion.replies?.length || 0} replies</span>
                           </div>
                           <div className="flex items-center space-x-1">
                             <ThumbsUp className="h-4 w-4" />
@@ -330,11 +392,17 @@ const PeerSupport = () => {
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <button className="flex items-center space-x-1 text-blue-600 hover:text-blue-800 transition-colors">
+                          <button
+                            onClick={() => handleLike(discussion._id)}
+                            className="flex items-center space-x-1 text-blue-600 hover:text-blue-800 transition-colors"
+                          >
                             <Heart className="h-4 w-4" />
                             <span className="text-sm">Support</span>
                           </button>
-                          <button className="flex items-center space-x-1 text-gray-600 hover:text-gray-800 transition-colors">
+                          <button
+                            onClick={() => handleReplyClick(discussion)}
+                            className="flex items-center space-x-1 text-gray-600 hover:text-gray-800 transition-colors"
+                          >
                             <MessageCircle className="h-4 w-4" />
                             <span className="text-sm">Reply</span>
                           </button>
@@ -355,7 +423,7 @@ const PeerSupport = () => {
 
                 <div className="grid md:grid-cols-2 gap-6">
                   {supportGroups.map((group) => (
-                    <div key={group.id} className="bg-gray-50 rounded-lg p-6">
+                    <div key={group._id} className="bg-gray-50 rounded-lg p-6">
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex-1">
                           <h4 className="font-semibold text-gray-900 mb-2">{group.name}</h4>
@@ -366,7 +434,7 @@ const PeerSupport = () => {
                         </div>
                         <div className={`w-3 h-3 rounded-full ${group.isActive ? 'bg-green-500' : 'bg-gray-400'}`}></div>
                       </div>
-                      
+
                       <div className="space-y-2 text-sm text-gray-600 mb-4">
                         <div className="flex items-center space-x-2">
                           <Users className="h-4 w-4" />
@@ -381,7 +449,7 @@ const PeerSupport = () => {
                           <span>{group.meetingTime}</span>
                         </div>
                       </div>
-                      
+
                       <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors">
                         Join Group
                       </button>
