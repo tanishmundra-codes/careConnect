@@ -1,10 +1,9 @@
-
 import express from "express";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import cors from "cors";
 import authRoutes from "./routes/authRoutes.js";
-import assessementRoutes from "./models/assessement.js";
+import assessementRoutes from "./models/assessment.js";
 dotenv.config();
 connectDB();
 
