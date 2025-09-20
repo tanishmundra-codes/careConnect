@@ -5,7 +5,8 @@ import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
 import assessmentRoutes from './routes/assessmentRoutes.js';
 import bookingRoutes from './routes/bookingRoutes.js';
-import counselorRoutes from './routes/counsellor.js'
+import counselorRoutes from './routes/counsellor.js';
+import peerSupportRoutes from './routes/p2pRoutes.js';
 
 // --- Basic Setup ---
 dotenv.config();
@@ -13,7 +14,6 @@ connectDB();
 const app = express();
 
 // --- Middleware ---
-// 1. Enable CORS for your frontend application
 app.use(
   cors({
     origin: 'http://localhost:5173',
@@ -24,23 +24,12 @@ app.use(
 app.use(express.json());
 
 // --- API Routes ---
-// Health check route to confirm the API is running
 app.get('/', (req, res) => res.send('API is running...'));
-
-// Mount the authentication routes under the /api/auth prefix
 app.use('/api/auth', authRoutes);
-
-// Mount the assessment routes under the /api/assessments prefix
 app.use('/api/assessments', assessmentRoutes);
-
-app.use('/api/counselors', counselorRoutes); // ✅ 2. USE the new routes
-
-
-// ✅ MOUNT NEW BOOKING ROUTES
-// This matches the `axios.post("/api/meetings", ...)` call from your frontend
+app.use('/api/counselors', counselorRoutes);
 app.use('/api/meetings', bookingRoutes);
-
-
+app.use('/api', peerSupportRoutes);
 
 // --- Server Initialization ---
 const PORT = process.env.PORT || 5000;
