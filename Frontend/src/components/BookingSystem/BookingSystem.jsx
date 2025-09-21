@@ -12,6 +12,8 @@ const BookingSystem = () => {
   const [reason, setReason] = useState('');
   const [urgency, setUrgency] = useState('routine');
   const [showConfirmation, setShowConfirmation] = useState(false);
+  
+  // State for dynamic data from the backend
   const [counselors, setCounselors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

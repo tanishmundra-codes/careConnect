@@ -1,4 +1,4 @@
-import Counselor from '../models/counsellor.js';
+import Counselor from "../models/counsellor.js";
 
 export const getCounselors = async (req, res) => {
   try {

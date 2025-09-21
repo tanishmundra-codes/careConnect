@@ -15,10 +15,21 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for stored user session
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    try {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        // ✅ Validation Step: Only set the user if it's a valid object with a role.
+        if (parsedUser && parsedUser.role) {
+          setUser(parsedUser);
+        } else {
+          // If the stored user is invalid, remove it.
+          localStorage.removeItem('user');
+        }
+      }
+    } catch (error) {
+      // If JSON parsing fails, clear the invalid item.
+      localStorage.removeItem('user');
     }
     setLoading(false);
   }, []);
