@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
-// ✅ Middleware to protect routes (only logged-in users can access)
+// Middleware to protect routes (only logged-in users can access)
 export const protect = async (req, res, next) => {
   let token;
 
@@ -20,22 +20,21 @@ export const protect = async (req, res, next) => {
         return res.status(401).json({ message: "User not found" });
       }
 
-      next(); // ✅ Continue to controller
+      next(); // Continue to the next middleware or controller
     } catch (error) {
       console.error("Auth error:", error);
       return res.status(401).json({ message: "Not authorized, token failed" });
     }
-  }
-
-  if (!token) {
+  } else {
+    // If no token is provided at all
     return res.status(401).json({ message: "Not authorized, no token provided" });
   }
 };
 
-// ✅ Middleware to authorize based on roles (student, counselor, admin)
+// Middleware to authorize based on roles (student, counselor, admin)
 export const authorizeRoles = (...roles) => {
   return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
+    if (!req.user || !roles.includes(req.user.role)) {
       return res.status(403).json({ message: "Access denied: insufficient permissions" });
     }
     next();

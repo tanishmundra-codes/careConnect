@@ -41,12 +41,19 @@ const SignupPage = () => {
     }
   };
 
+  const handleRoleSelection = (role) => {
+    if (role === 'counselor') {
+      navigate('/counselor-signup');
+    } else {
+      setFormData({ ...formData, role });
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setErrors({});
 
-    // Basic validation
     const newErrors = {};
     if (!formData.email.trim()) newErrors.email = "Email is required";
     if (!formData.phone.trim()) newErrors.phone = "Phone number is required";
@@ -63,18 +70,20 @@ const SignupPage = () => {
       return;
     }
 
+    const postBody = {
+      email: formData.email,
+      phone: formData.phone,
+      dateOfBirth: formData.dateOfBirth,
+      institution: formData.institution,
+      password: formData.password,
+      role: formData.role,
+    };
+
     try {
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: formData.email,
-          phone: formData.phone,
-          dateOfBirth: formData.dateOfBirth,
-          institution: formData.institution,
-          password: formData.password,
-          role: formData.role,
-        }),
+        body: JSON.stringify(postBody),
       });
 
       const data = await res.json();
@@ -82,8 +91,8 @@ const SignupPage = () => {
         throw new Error(data.message || "Signup failed");
       }
 
-      alert(`✅ Account created for ${data.username || data.email}`);
-      navigate("/login"); // redirect to login page
+      alert(`✅ Account created for ${data.email}`);
+      navigate("/login");
     } catch (err) {
       alert(`❌ ${err.message}`);
     } finally {
@@ -94,7 +103,6 @@ const SignupPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
-        {/* Header */}
         <div className="text-center">
           <button
             onClick={() => navigate("/")}
@@ -115,10 +123,8 @@ const SignupPage = () => {
           </p>
         </div>
 
-        {/* Signup Form */}
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <form className="space-y-6" onSubmit={handleSubmit}>
-            {/* Role Selection */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 I am a:
@@ -128,7 +134,7 @@ const SignupPage = () => {
                   <button
                     key={role}
                     type="button"
-                    onClick={() => setFormData({ ...formData, role })}
+                    onClick={() => handleRoleSelection(role)}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                       formData.role === role
                         ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg"
@@ -141,12 +147,8 @@ const SignupPage = () => {
               </div>
             </div>
 
-            {/* Email */}
             <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 Email Address
               </label>
               <div className="relative">
@@ -168,12 +170,8 @@ const SignupPage = () => {
               )}
             </div>
 
-            {/* Phone */}
             <div>
-              <label
-                htmlFor="phone"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
                 Phone Number
               </label>
               <div className="relative">
@@ -195,12 +193,8 @@ const SignupPage = () => {
               )}
             </div>
 
-            {/* Date of Birth */}
             <div>
-              <label
-                htmlFor="dateOfBirth"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700 mb-2">
                 Date of Birth
               </label>
               <div className="relative">
@@ -223,12 +217,8 @@ const SignupPage = () => {
               )}
             </div>
 
-            {/* Institution */}
             <div>
-              <label
-                htmlFor="institution"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="institution" className="block text-sm font-medium text-gray-700 mb-2">
                 Institution/Organization
               </label>
               <div className="relative">
@@ -252,12 +242,8 @@ const SignupPage = () => {
               )}
             </div>
 
-            {/* Password */}
             <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 Password
               </label>
               <div className="relative">
@@ -286,12 +272,8 @@ const SignupPage = () => {
               )}
             </div>
 
-            {/* Confirm Password */}
             <div>
-              <label
-                htmlFor="confirmPassword"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
                 Confirm Password
               </label>
               <div className="relative">
@@ -326,7 +308,6 @@ const SignupPage = () => {
               )}
             </div>
 
-            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
@@ -336,7 +317,6 @@ const SignupPage = () => {
             </button>
           </form>
 
-          {/* Footer */}
           <div className="mt-6 text-center space-y-2">
             <p className="text-sm text-gray-600">
               Already have an account?{" "}
@@ -356,7 +336,6 @@ const SignupPage = () => {
           </div>
         </div>
 
-        {/* Emergency */}
         <div className="text-center bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-sm text-red-800 font-medium">
             In Crisis? Need Immediate Help?

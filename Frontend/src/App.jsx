@@ -5,6 +5,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import LandingPage from './components/LandingPage/LandingPage';
 import LoginPage from './components/LoginPage/LoginPage';
 import SignupPage from './components/Signup/signup';
+import CounselorSignupPage from './components/Signup/counselor';
 import StudentDashboard from './components/StudentDashboard/StudentDashboard';
 import CounselorDashboard from './components/CounselorDash/CounselorDashboard';
 import AdminDashboard from './components/AdminDashboard/AdminDashboard';
@@ -45,6 +46,10 @@ function AppRoutes() {
       <Route
         path="/signup"
         element={user ? <Navigate to={`/${user.role}`} replace /> : <SignupPage />}
+      />
+      <Route
+        path="/counselor-signup"
+        element={user ? <Navigate to={`/${user.role}`} replace /> : <CounselorSignupPage />}
       />
 
       {/* Student Routes */}

@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 import { ArrowLeft, Calendar, Clock, User, Phone, Video, MessageSquare, CheckCircle, AlertCircle } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 const BookingSystem = () => {
   const [selectedDate, setSelectedDate] = useState('');
@@ -10,36 +12,25 @@ const BookingSystem = () => {
   const [reason, setReason] = useState('');
   const [urgency, setUrgency] = useState('routine');
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [counselors, setCounselors] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const counselors = [
-    {
-      id: 1,
-      name: 'Dr. Sarah Johnson',
-      specialization: 'Anxiety & Depression',
-      experience: '8 years',
-      rating: 4.9,
-      availability: 'Available today',
-      image: 'https://images.pexels.com/photos/5327580/pexels-photo-5327580.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop'
-    },
-    {
-      id: 2,
-      name: 'Dr. Michael Chen',
-      specialization: 'Academic Stress & ADHD',
-      experience: '6 years',
-      rating: 4.8,
-      availability: 'Available tomorrow',
-      image: 'https://images.pexels.com/photos/5327921/pexels-photo-5327921.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop'
-    },
-    {
-      id: 3,
-      name: 'Dr. Emily Rodriguez',
-      specialization: 'Trauma & PTSD',
-      experience: '10 years',
-      rating: 4.9,
-      availability: 'Available this week',
-      image: 'https://images.pexels.com/photos/5327656/pexels-photo-5327656.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop'
-    }
-  ];
+  const { user } = useAuth();
+
+  useEffect(() => {
+    const fetchCounselors = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/counselors');
+        setCounselors(response.data);
+        setLoading(false);
+      } catch (err) {
+        setError('Failed to load counselors. Please try again.');
+        setLoading(false);
+      }
+    };
+    fetchCounselors();
+  }, []);
 
   const timeSlots = [
     '9:00 AM', '10:00 AM', '11:00 AM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM'
@@ -58,18 +49,26 @@ const BookingSystem = () => {
 
   const handleBooking = async (e) => {
     e.preventDefault();
-  
+    
+    if (!user) {
+        alert("You must be logged in to book a session.");
+        return;
+    }
+
     try {
       const response = await axios.post("/api/meetings", {
-        studentId: "12345",  // later replace with logged-in student ID
+        studentId: user._id,
+        counselorId: selectedCounselor,
         topic: reason,
         date: `${selectedDate} ${selectedTime}`,
-        status: "pending",
-        counselorId: selectedCounselor,
         sessionType,
         urgency
+      }, {
+        headers: {
+            Authorization: `Bearer ${user.token}`
+        }
       });
-  
+    
       console.log("Booking saved:", response.data);
       setShowConfirmation(true);
     } catch (error) {
@@ -87,8 +86,16 @@ const BookingSystem = () => {
     }
   };
 
+  if (loading) {
+    return <p className="text-center mt-8">Loading counselors...</p>;
+  }
+
+  if (error) {
+    return <p className="text-center mt-8 text-red-500">{error}</p>;
+  }
+
   if (showConfirmation) {
-    const selectedCounselorData = counselors.find(c => c.id === parseInt(selectedCounselor));
+    const selectedCounselorData = counselors.find(c => c._id === selectedCounselor);
     
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
@@ -131,7 +138,6 @@ const BookingSystem = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-4">
@@ -149,7 +155,6 @@ const BookingSystem = () => {
       </header>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Emergency Notice */}
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
           <div className="flex items-start space-x-3">
             <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
@@ -163,7 +168,6 @@ const BookingSystem = () => {
         </div>
 
         <form onSubmit={handleBooking} className="space-y-8">
-          {/* Urgency Level */}
           <div className="bg-white rounded-xl shadow-sm p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">How urgent is your need for support?</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -191,43 +195,49 @@ const BookingSystem = () => {
             </div>
           </div>
 
-          {/* Counselor Selection */}
           <div className="bg-white rounded-xl shadow-sm p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Choose Your Counselor</h2>
             <div className="grid gap-4">
-              {counselors.map((counselor) => (
-                <button
-                  key={counselor.id}
-                  type="button"
-                  onClick={() => setSelectedCounselor(counselor.id.toString())}
-                  className={`p-4 rounded-lg border-2 text-left transition-all ${
-                    selectedCounselor === counselor.id.toString()
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <div className="flex items-start space-x-4">
-                    <img
-                      src={counselor.image}
-                      alt={counselor.name}
-                      className="w-16 h-16 rounded-full object-cover"
-                    />
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900">{counselor.name}</h3>
-                      <p className="text-sm text-blue-600 mb-1">{counselor.specialization}</p>
-                      <div className="flex items-center space-x-4 text-sm text-gray-600">
-                        <span>{counselor.experience} experience</span>
-                        <span>⭐ {counselor.rating}</span>
-                        <span className="text-green-600">{counselor.availability}</span>
+              {loading ? (
+                <p>Loading counselors...</p>
+              ) : error ? (
+                <p className="text-red-500">{error}</p>
+              ) : counselors.length === 0 ? (
+                <p>No counselors available at the moment.</p>
+              ) : (
+                counselors.map((counselor) => (
+                  <button
+                    key={counselor._id}
+                    type="button"
+                    onClick={() => setSelectedCounselor(counselor._id)}
+                    className={`p-4 rounded-lg border-2 text-left transition-all ${
+                      selectedCounselor === counselor._id
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-start space-x-4">
+                      <img
+                        src={counselor.image}
+                        alt={counselor.name}
+                        className="w-16 h-16 rounded-full object-cover"
+                      />
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-gray-900">{counselor.name}</h3>
+                        <p className="text-sm text-blue-600 mb-1">{counselor.specialization}</p>
+                        <div className="flex items-center space-x-4 text-sm text-gray-600">
+                          <span>{counselor.experience} experience</span>
+                          <span>⭐ {counselor.rating}</span>
+                          <span className="text-green-600">{counselor.availability}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </button>
-              ))}
+                  </button>
+                ))
+              )}
             </div>
           </div>
 
-          {/* Session Type */}
           <div className="bg-white rounded-xl shadow-sm p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Session Type</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -254,7 +264,6 @@ const BookingSystem = () => {
             </div>
           </div>
 
-          {/* Date and Time */}
           <div className="grid md:grid-cols-2 gap-6">
             <div className="bg-white rounded-xl shadow-sm p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Select Date</h2>
@@ -289,7 +298,6 @@ const BookingSystem = () => {
             </div>
           </div>
 
-          {/* Reason for Session */}
           <div className="bg-white rounded-xl shadow-sm p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">What would you like to discuss?</h2>
             <select
@@ -312,7 +320,6 @@ const BookingSystem = () => {
             />
           </div>
 
-          {/* Submit Button */}
           <div className="bg-white rounded-xl shadow-sm p-6">
             <button
               type="submit"

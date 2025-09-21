@@ -1,16 +1,13 @@
+// routes/bookingRoutes.js
+
 import express from 'express';
-import bookingController from '../controllers/bookingController.js';
+import { createBooking, getMyBookings, updateBookingStatus } from '../controllers/bookingController.js';
+import { protect } from '../middlewares/authMiddleware.js'; // ❗ Ensure you have the correct path to your middleware
 
 const router = express.Router();
 
-// Note: In a real app with JWT, you would add authentication middleware here
-// import { protect } from '../middleware/authMiddleware.js';
-// router.use(protect);
-
-// POST /api/meetings - Create a new booking
-router.post('/', bookingController.createBooking);
-
-// GET /api/meetings - Get all bookings
-router.get('/', bookingController.getAllBookings);
+router.post('/', protect, createBooking);
+router.get('/my', protect, getMyBookings);
+router.put('/status/:bookingId', protect, updateBookingStatus);
 
 export default router;

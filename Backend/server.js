@@ -20,7 +20,6 @@ app.use(
     credentials: true,
   })
 );
-// 2. Enable JSON body parsing for API requests
 app.use(express.json());
 
 // --- API Routes ---

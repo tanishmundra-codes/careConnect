@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Brain, Lock, Eye, EyeOff, User } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import axios from 'axios';
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({ email: '', password: '', role: 'student' });
@@ -22,19 +23,8 @@ const LoginPage = () => {
     setError('');
 
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.message || 'Login failed');
-        setLoading(false);
-        return;
-      }
+      const res = await axios.post('/api/auth/login', formData);
+      const data = res.data;
 
       // Save user data in context
       login(data);
@@ -43,10 +33,14 @@ const LoginPage = () => {
       navigate(`/${data.role}`);
     } catch (err) {
       console.error(err);
-      setError('Network error. Please try again.');
+      if (err.response && err.response.data && err.response.data.message) {
+        setError(err.response.data.message);
+      } else {
+        setError('Network error. Please try again.');
+      }
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (

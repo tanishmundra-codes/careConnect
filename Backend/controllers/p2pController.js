@@ -92,5 +92,3 @@ export const getAllSupportGroups = async (req, res) => {
     res.status(500).json({ message: 'Error fetching support groups', error: error.message });
   }
 };
-
-// You can add more controller functions here as needed

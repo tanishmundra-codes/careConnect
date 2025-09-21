@@ -1,29 +1,23 @@
 import mongoose from 'mongoose';
 
 const bookingSchema = new mongoose.Schema({
-  // In a full application, these would link to actual User and Counselor documents
   studentId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User', // Reference to the User model
+    ref: 'User',
     required: true,
   },
   counselorId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Counselor', // Reference to the Counselor model
+    ref: 'Counselor',
+    required: true,
+  },
+  topic: {
+    type: String,
     required: true,
   },
   date: {
     type: Date,
-    required: [true, 'A date and time for the session is required.'],
-  },
-  topic: {
-    type: String,
-    required: [true, 'A topic or reason for the session is required.'],
-  },
-  status: {
-    type: String,
-    enum: ['pending', 'confirmed', 'completed', 'cancelled'],
-    default: 'pending',
+    required: true,
   },
   sessionType: {
     type: String,
@@ -33,16 +27,14 @@ const bookingSchema = new mongoose.Schema({
   urgency: {
     type: String,
     enum: ['routine', 'high', 'urgent'],
-    required: true,
+    default: 'routine',
   },
-  // Optional field from the textarea in the frontend
-  additionalDetails: {
+  status: {
     type: String,
-  }
-}, {
-  timestamps: true, // Automatically adds createdAt and updatedAt fields
-});
+    enum: ['Pending', 'Approved', 'Rejected', 'Completed'],
+    default: 'Pending',
+  },
+}, { timestamps: true });
 
 const Booking = mongoose.model('Booking', bookingSchema);
-
 export default Booking;

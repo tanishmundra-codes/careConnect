@@ -1,82 +1,83 @@
 import Booking from '../models/booking.js';
-// In a real app, you might import User and Counselor models to validate IDs
-// import User from '../models/userModel.js';
-// import Counselor from '../models/counselorModel.js';
+import Counselor from '../models/counsellor.js';
+import User from '../models/user.js';
 
-/**
- * @desc    Create a new booking
- * @route   POST /api/meetings
- * @access  Private (for authenticated students)
- */
-const createBooking = async (req, res) => {
+// Student creates a new booking
+export const createBooking = async (req, res) => {
   try {
-    const { studentId, counselorId, date, topic, sessionType, urgency, additionalDetails } = req.body;
-
-    // Basic validation
-    if (!studentId || !counselorId || !date || !topic || !sessionType || !urgency) {
-      return res.status(400).json({ success: false, message: 'Please provide all required booking fields.' });
-    }
-
-    // NOTE: In a real application, you would add more validation here:
-    // 1. Verify that `studentId` matches the logged-in user.
-    // 2. Check if the `counselorId` is a valid counselor.
-    // 3. Ensure the requested `date` slot is actually available.
-
+    const { studentId, counselorId, topic, date, sessionType, urgency } = req.body;
     const newBooking = new Booking({
       studentId,
       counselorId,
-      date: new Date(date), // Convert string date from frontend into a Date object
       topic,
+      date,
       sessionType,
       urgency,
-      additionalDetails,
-      status: 'pending', // Default status
+      status: 'Pending',
     });
 
-    const savedBooking = await newBooking.save();
-
-    res.status(201).json({
-      success: true,
-      message: 'Booking created successfully. Awaiting confirmation.',
-      data: savedBooking,
-    });
+    await newBooking.save();
+    res.status(201).json(newBooking);
   } catch (error) {
-    console.error('Error creating booking:', error);
-    if (error.name === 'ValidationError') {
-      const messages = Object.values(error.errors).map(val => val.message);
-      return res.status(400).json({ success: false, message: messages.join(', ') });
-    }
-    res.status(500).json({ success: false, message: 'Server error while creating booking.' });
+    res.status(500).json({ message: 'Booking failed', error: error.message });
   }
 };
 
-/**
- * @desc    Get all bookings (e.g., for an admin or a user's own bookings)
- * @route   GET /api/meetings
- * @access  Private
- */
-const getAllBookings = async (req, res) => {
+// Get a user's specific bookings
+export const getMyBookings = async (req, res) => {
   try {
-    // In a real app, you'd filter by user: const filter = { studentId: req.user.id };
-    const bookings = await Booking.find({})
-      .populate('studentId', 'name email') // Example: Populate student's name and email
-      .populate('counselorId', 'name specialization') // Example: Populate counselor's name
-      .sort({ date: -1 }); // Sort by most recent date first
+    const { _id, role } = req.user;
+    let bookings;
 
-    res.status(200).json({
-      success: true,
-      count: bookings.length,
-      data: bookings,
-    });
+    if (role === 'student') {
+      bookings = await Booking.find({ studentId: _id }).populate('counselorId', 'name image specialization');
+    } else if (role === 'counselor') {
+      // ❗ This is the fix for counselors ❗
+      // First, find the Counselor document using the User's ID
+      const counselorProfile = await Counselor.findOne({ userId: _id });
+
+      if (!counselorProfile) {
+        return res.status(404).json({ message: 'Counselor profile not found' });
+      }
+
+      // Then, use the Counselor profile's _id to find the bookings
+      bookings = await Booking.find({ counselorId: counselorProfile._id }).populate('studentId', 'email institution');
+    } else {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    res.status(200).json(bookings);
   } catch (error) {
-    console.error('Error fetching bookings:', error);
-    res.status(500).json({ success: false, message: 'Server error while fetching bookings.' });
+    res.status(500).json({ message: 'Failed to fetch bookings', error: error.message });
   }
 };
 
-const bookingController = {
-  createBooking,
-  getAllBookings,
+// Counselor updates booking status
+export const updateBookingStatus = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const { status } = req.body;
+    const { _id: userId } = req.user;
+
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+    
+    // Find the counselor profile linked to the logged-in user
+    const counselorProfile = await Counselor.findOne({ userId });
+
+    if (!counselorProfile || booking.counselorId.toString() !== counselorProfile._id.toString()) {
+        return res.status(403).json({ message: 'Forbidden: You are not authorized to update this booking' });
+    }
+
+    booking.status = status;
+    await booking.save();
+
+    res.status(200).json(booking);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to update booking status', error: error.message });
+  }
 };
 
-export default bookingController;
+// ... (Add other controller functions here)
