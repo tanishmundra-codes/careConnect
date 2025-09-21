@@ -33,6 +33,7 @@ function ProtectedRoute({ children, allowedRoles }) {
 
 function AppRoutes() {
   const { user } = useAuth();
+  const isLoggedIn = user && user.role;
 
   return (
     <Routes>
@@ -40,12 +41,13 @@ function AppRoutes() {
       <Route path="/" element={<LandingPage />} />
       <Route
         path="/login"
-        element={user ? <Navigate to={`/${user.role}`} replace /> : <LoginPage />}
+        element={isLoggedIn ? <Navigate to={`/${user.role}`} replace /> : <LoginPage />}
       />
       <Route
         path="/signup"
-        element={user ? <Navigate to={`/${user.role}`} replace /> : <SignupPage />}
+        element={isLoggedIn ? <Navigate to={`/${user.role}`} replace /> : <SignupPage />}
       />
+
 
       {/* Student Routes */}
       <Route

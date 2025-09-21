@@ -1,29 +1,38 @@
-import Counselor from '../models/counsellor.js';
+import Counselor from "../models/counsellor.js";
 
-/**
- * @desc    Get all counselors from the database
- * @route   GET /api/counselors
- * @access  Public (or Private if you want only logged-in users to see them)
- */
-const getAllCounselors = async (req, res) => {
+// @desc Get all counselors
+// @route GET /api/counselors
+export const getCounselors = async (req, res) => {
   try {
-    // Find all documents in the Counselor collection
     const counselors = await Counselor.find({});
-    
-    res.status(200).json({
-      success: true,
-      count: counselors.length,
-      data: counselors,
-    });
+    res.json(counselors);
   } catch (error) {
-    console.error('Error fetching counselors:', error);
-    res.status(500).json({ success: false, message: 'Server error while fetching counselors.' });
+    res.status(500).json({ message: "Error fetching counselors", error });
   }
 };
 
-const counselorController = {
-  getAllCounselors,
+// @desc Add a new counselor
+// @route POST /api/counselors
+export const addCounselor = async (req, res) => {
+  try {
+    const counselor = new Counselor(req.body);
+    const savedCounselor = await counselor.save();
+    res.status(201).json(savedCounselor);
+  } catch (error) {
+    res.status(400).json({ message: "Error adding counselor", error });
+  }
 };
 
-export default counselorController;
-
+// @desc Get a counselor by ID
+// @route GET /api/counselors/:id
+export const getCounselorById = async (req, res) => {
+  try {
+    const counselor = await Counselor.findById(req.params.id);
+    if (!counselor) {
+      return res.status(404).json({ message: "Counselor not found" });
+    }
+    res.json(counselor);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching counselor", error });
+  }
+};

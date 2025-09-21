@@ -71,24 +71,30 @@ const LoginPage = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Role Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">I am a:</label>
-              <div className="grid grid-cols-3 gap-2">
-                {['student', 'counselor', 'admin'].map((role) => (
-                  <button
-                    key={role}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, role })}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                      formData.role === role
-                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {role.charAt(0).toUpperCase() + role.slice(1)}
-                  </button>
-                ))}
-              </div>
-            </div>
+  <label className="block text-sm font-medium text-gray-700 mb-2">I am a:</label>
+  <div className="grid grid-cols-3 gap-2">
+    {['student', 'counselor', 'admin'].map((role) => (
+      <button
+        key={role}
+        type="button"
+        onClick={() => {
+          if (role === 'counselor') {
+            navigate('/login/counsellor'); // 👈 Redirect counsellor directly
+          } else {
+            setFormData({ ...formData, role });
+          }
+        }}
+        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+          formData.role === role
+            ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+        }`}
+      >
+        {role.charAt(0).toUpperCase() + role.slice(1)}
+      </button>
+    ))}
+  </div>
+</div>
 
             {/* Email */}
             <div>
