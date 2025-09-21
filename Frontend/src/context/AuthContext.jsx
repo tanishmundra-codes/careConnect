@@ -1,59 +1,44 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import axios from 'axios';
 
 const AuthContext = createContext();
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  return useContext(AuthContext);
 };
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
 
+  // Initialize user from local storage on first load
   useEffect(() => {
-    try {
-      const storedUser = localStorage.getItem('user');
-      if (storedUser) {
-        const parsedUser = JSON.parse(storedUser);
-        // ✅ Validation Step: Only set the user if it's a valid object with a role.
-        if (parsedUser && parsedUser.role) {
-          setUser(parsedUser);
-        } else {
-          // If the stored user is invalid, remove it.
-          localStorage.removeItem('user');
-        }
-      }
-    } catch (error) {
-      // If JSON parsing fails, clear the invalid item.
-      localStorage.removeItem('user');
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
     }
-    setLoading(false);
   }, []);
 
   const login = (userData) => {
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
+    // Set axios default authorization header
+    if (userData && userData.token) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${userData.token}`;
+    }
   };
 
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user');
+    // Remove axios default authorization header
+    delete axios.defaults.headers.common['Authorization'];
   };
 
   const value = {
     user,
     login,
     logout,
-    loading
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {!loading && children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
